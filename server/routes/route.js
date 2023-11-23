@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+
 
 import { createPost, updatePost, deletePost, getPost, getAllPosts } from '../controller/post-controller.js';
 import { uploadImage, getImage } from '../controller/image-controller.js';
@@ -6,9 +8,48 @@ import { newComment, getComments, deleteComment } from '../controller/comment-co
 import { loginUser, singupUser, logoutUser } from '../controller/user-controller.js';
 import { authenticateToken, createNewToken } from '../controller/jwt-controller.js';
 
-import upload from '../utils/upload.js';
+// import upload from '../utils/upload.js';
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/images/");
+  },
+  filename: function (req, file, cb) {
+    console.log(file);
+    if (file.originalname.length > 6)
+      cb(
+        null,
+        file.fieldname +
+          "-" +
+          Date.now() +
+          file.originalname.substr(
+            file.originalname.length - 6,
+            file.originalname.length
+          )
+      );
+    else cb(null, file.fieldname + "-" + Date.now() + file.originalname);
+  },
+  // filename: function (req, file, cb) {
+  //   cb(null, file.fieldname + Date.now() + ".png");
+  // },
+});
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "application/pdf"
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error("Image uploaded is not of type jpg/jpeg or png"), false);
+  }
+};
+const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+
 
 router.post('/login', loginUser);
 router.post('/signup', singupUser);
